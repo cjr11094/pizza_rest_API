@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # PizzaAnalytics
 
 Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/pizzaAnalytics`. To experiment with that code, run `bin/console` for an interactive prompt.
@@ -41,3 +42,5 @@ The gem is available as open source under the terms of the [MIT License](http://
 
 =======
 # pizzaAnalytics
+kodable pizza analytics
+>>>>>>> 8b01a3aa3b992f781c909e04d1e49f7f5fb1eef4
