@@ -3,6 +3,24 @@ module Rest
     prefix 'api'
     format :json
 
+    helpers do
+        def getNumPizzasToday(index, length, users)
+            numPizzasToday = 1
+            currPurchaseDate = users[index][:eaten_at]
+            tempIndex = index+1
+            while tempIndex<length
+                nextPurchaseDate = users[tempIndex][:eaten_at]
+                if currPurchaseDate == nextPurchaseDate
+                    numPizzasToday+=1
+                else
+                    break
+                end
+                tempIndex+=1
+            end
+            return numPizzasToday
+        end
+    end
+
     resource "people" do
         get do
             { :total => Person.count, :data => Person.all.map { |e| { :id => e.id, :name => e.name } } }
@@ -18,32 +36,52 @@ module Rest
     resource "streaks" do
         get do
             @users = Pizza.all.map { |e| { :id => e.id, :eaten_at => e.date } }
-            @users.sort_by { |hsh| hsh[:eaten_at] }
-            prevPurchaseDate = nil
-            currStreak = 0
-            prevStreak = 0
-            streaks = []
-            streak = []
-            @users.each do |hsh|
-                currPurchaseDate = hsh[:eaten_at]
-                if prev != nil
-                    if prevPurchaseDate == currPurchaseDate
-                        currStreak+=1
-                    else
-                        if currStreak >= prevStreak
-                            streak.push(prevPurchaseDate)
-                        else
-                            if streak.length > 1
-                                streaks.push(streak)
-                                streak = []
-                            end
+            @users.sort_by! { |hsh| hsh[:eaten_at] }
+
+            index = 0
+            length = @users.length
+            currStreak=0
+            currStreakList = []
+            prevStreakList = []
+            allStreaks = []
+            numPizzasToday = getNumPizzasToday(index, length, @users)
+            streaking = false
+            while index < length
+                prevNumPizzas=numPizzasToday
+                numPizzasToday = getNumPizzasToday(index, length, @users)
+                puts "we previously had #{prevNumPizzas} pizzas"
+                puts "numPizzas for #{ @users[index][:eaten_at] } is #{numPizzasToday}"
+                if numPizzasToday > prevNumPizzas # continue streak
+                    puts "continue streak"
+                    if !streaking
+                        currStreakList.push(prevStreakList[0])
+                    end
+                    streaking = true
+                    currStreak+=1
+                    upperLimit = index+numPizzasToday
+                    while index < upperLimit and index < length
+                        currStreakList.push(@users[index])
+                        index+=1
+                    end
+
+                else # end streak
+                    puts "currStreak is #{currStreak}"
+                    streaking=false
+                    if currStreak >= 1
+                        currStreakList.each do |hsh|
+                            allStreaks.push(hsh)
                         end
                     end
-                    prevPurchaseDate = currPurchaseDate
-                else
-                    prevPurchaseDate = hsh[:eaten_at]
+                    currStreakList = []
+                    currStreak = 0
+                    prevStreakList=[]
+                    prevStreakList.push(@users[index])
+                    index+=numPizzasToday
                 end
             end
+
+            allStreaks
+
         end
     end
 
@@ -75,7 +113,7 @@ module Rest
             #     else
             #         prevPurchaseDate = hsh[:eaten_at]
             #     end
-            # end
+            end
         end        
     end
 
