@@ -49,10 +49,7 @@ module Rest
             while index < length
                 prevNumPizzas=numPizzasToday
                 numPizzasToday = getNumPizzasToday(index, length, @users)
-                puts "we previously had #{prevNumPizzas} pizzas"
-                puts "numPizzas for #{ @users[index][:eaten_at] } is #{numPizzasToday}"
                 if numPizzasToday > prevNumPizzas # continue streak
-                    puts "continue streak"
                     if !streaking
                         currStreakList.push(prevStreakList[0])
                     end
@@ -65,7 +62,6 @@ module Rest
                     end
 
                 else # end streak
-                    puts "currStreak is #{currStreak}"
                     streaking=false
                     if currStreak >= 1
                         currStreakList.each do |hsh|
@@ -80,7 +76,7 @@ module Rest
                 end
             end
 
-            allStreaks
+            { :data => allStreaks }
 
         end
     end
@@ -88,32 +84,38 @@ module Rest
     resource "most_pizza" do
         get do
             @users = Pizza.all.map { |e| { :id => e.id, :eaten_at => e.date } }
-            @users.sort_by { |hsh| hsh[:eaten_at] }
-            prevPurchaseDate = nil
-            currStreak = 0
-            prevStreak = 0
-            streaks = []
-            streak = []
-            @users.each do |hsh|
-            #     currPurchaseDate = hsh[:eaten_at]
-            #     if prev != nil
-            #         if prevPurchaseDate == currPurchaseDate
-            #             currStreak+=1
-            #         else
-            #             if currStreak >= prevStreak
-            #                 streak.push(prevPurchaseDate)
-            #             else
-            #                 if streak.length > 1
-            #                     streaks.push(streak)
-            #                     streak = []
-            #                 end
-            #             end
-            #         end
-            #         prevPurchaseDate = currPurchaseDate
-            #     else
-            #         prevPurchaseDate = hsh[:eaten_at]
-            #     end
+            @users.sort_by! { |hsh| hsh[:eaten_at] }
+            index = 0
+            length = @users.length
+            maxList = []
+            maxPizzas = 0
+            maxDate = nil
+            currMonth = nil
+            while index < length
+                monthOfNextDate = @users[index][:eaten_at].month
+                if !currMonth
+                    currMonth = monthOfNextDate
+                else
+                    if !(currMonth == monthOfNextDate)
+                        maxList.push( maxDate )
+                        maxPizzas = 0
+                        maxDate = nil
+                        currMonth = monthOfNextDate
+                    end
+                end    
+
+                numPizzasToday = getNumPizzasToday(index, length, @users)
+                currDate = @users[index]
+
+                if numPizzasToday > maxPizzas
+                    maxDate = currDate
+                end
+                index+=numPizzasToday
             end
+
+            { :data => maxList }
+
+            
         end        
     end
 

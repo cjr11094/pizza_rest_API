@@ -14,10 +14,11 @@ module Rest
       # Serve error pages or respond with API response
       case response[0]
       when 404, 500
-        [response[0]]
+        response[0]
       else
         response
       end
+
     end
   end
 end
